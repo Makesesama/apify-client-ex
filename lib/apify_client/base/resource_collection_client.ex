@@ -142,7 +142,7 @@ defmodule ApifyClient.Base.ResourceCollectionClient do
         end
       end
 
-      defoverridable list: 2, create: 2, get_or_create: 3
+      defoverridable list: 2, create: 2, get_or_create: 3, url: 1, url: 2
     end
   end
 end

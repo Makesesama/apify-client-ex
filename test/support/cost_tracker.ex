@@ -166,19 +166,25 @@ defmodule ApifyClientTest.CostTracker do
 
   # Helper to extract usage from complex billing structure
   defp get_billing_usage(usage_map, "compute") do
-    # Look for compute units in the aggregated usage
-    get_in(usage_map, ["aggregatedUsage", "ACTOR_COMPUTE_UNITS", "quantity"]) || 0
+    # Look for compute units in the new monthly service usage format or legacy aggregated usage
+    get_in(usage_map, ["monthlyServiceUsage", "ACTOR_COMPUTE_UNITS", "quantity"]) ||
+      get_in(usage_map, ["aggregatedUsage", "ACTOR_COMPUTE_UNITS", "quantity"]) || 0
   end
 
   defp get_billing_usage(usage_map, "dataTransfer") do
-    # Look for data transfer in the aggregated usage
-    get_in(usage_map, ["aggregatedUsage", "DATA_TRANSFER_GBYTES", "quantity"]) || 0
+    # Look for data transfer in the new format or legacy format
+    external = get_in(usage_map, ["monthlyServiceUsage", "DATA_TRANSFER_EXTERNAL_GBYTES", "quantity"]) ||
+               get_in(usage_map, ["aggregatedUsage", "DATA_TRANSFER_GBYTES", "quantity"]) || 0
+    internal = get_in(usage_map, ["monthlyServiceUsage", "DATA_TRANSFER_INTERNAL_GBYTES", "quantity"]) || 0
+    external + internal
   end
 
   defp get_billing_usage(usage_map, "storage") do
-    # Look for storage in the aggregated usage (dataset + kv store)
-    dataset_storage = get_in(usage_map, ["aggregatedUsage", "DATASET_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) || 0
-    kv_storage = get_in(usage_map, ["aggregatedUsage", "KEY_VALUE_STORE_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) || 0
+    # Look for storage in the new format or legacy format (dataset + kv store)
+    dataset_storage = get_in(usage_map, ["monthlyServiceUsage", "DATASET_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) ||
+                      get_in(usage_map, ["aggregatedUsage", "DATASET_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) || 0
+    kv_storage = get_in(usage_map, ["monthlyServiceUsage", "KEY_VALUE_STORE_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) ||
+                 get_in(usage_map, ["aggregatedUsage", "KEY_VALUE_STORE_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) || 0
     dataset_storage + kv_storage
   end
 

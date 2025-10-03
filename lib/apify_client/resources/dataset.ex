@@ -190,7 +190,10 @@ defmodule ApifyClient.Resources.Dataset do
   # Private helper functions
 
   defp build_list_items_params(options) do
-    options
+    # Convert keyword list to map if needed
+    options_map = if is_list(options), do: Map.new(options), else: options
+
+    options_map
     |> Map.take([
       :offset,
       :limit,

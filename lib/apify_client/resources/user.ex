@@ -78,10 +78,9 @@ defmodule ApifyClient.Resources.User do
   """
   @spec webhook_dispatches(t()) :: ApifyClient.Resources.WebhookDispatchCollection.t()
   def webhook_dispatches(user) do
-    ApifyClient.Resources.WebhookDispatchCollection.new(
-      user.client,
-      url(user, "webhook-dispatches")
-    )
+    collection = ApifyClient.Resources.WebhookDispatchCollection.new(user.client, [])
+    # Webhook dispatches is a global endpoint, not user-specific
+    %{collection | base_url: ApifyClient.Config.api_url(user.client.config)}
   end
 
   # Private helper functions
