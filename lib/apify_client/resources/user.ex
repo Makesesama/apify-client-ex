@@ -68,6 +68,22 @@ defmodule ApifyClient.Resources.User do
     HTTPClient.get(user.http_client, url(user, "limits"))
   end
 
+  @doc """
+  Returns a WebhookDispatchCollection client for the user's webhook dispatches.
+
+  ## Examples
+
+      iex> user |> User.webhook_dispatches()
+      %ApifyClient.Resources.WebhookDispatchCollection{...}
+  """
+  @spec webhook_dispatches(t()) :: ApifyClient.Resources.WebhookDispatchCollection.t()
+  def webhook_dispatches(user) do
+    ApifyClient.Resources.WebhookDispatchCollection.new(
+      user.client,
+      url(user, "webhook-dispatches")
+    )
+  end
+
   # Private helper functions
 
   defp build_usage_params(options) do
