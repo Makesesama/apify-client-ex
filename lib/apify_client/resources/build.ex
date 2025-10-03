@@ -3,7 +3,7 @@ defmodule ApifyClient.Resources.Build do
   Client for managing a specific actor build.
   """
 
-  use ApifyClient.Base.ResourceClient, resource_path: "actor-builds"
+  use ApifyClient.Base.ResourceClient, resource_path: "builds"
 
   @doc """
   Aborts the build.

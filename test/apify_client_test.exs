@@ -1,7 +1,7 @@
 defmodule ApifyClientTest do
   use ExUnit.Case, async: true
 
-  alias ApifyClient.{Config, Error}
+  alias ApifyClient.Config
 
   describe "new/1" do
     test "creates client with default configuration" do
