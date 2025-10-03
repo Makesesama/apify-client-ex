@@ -3,7 +3,7 @@ defmodule ApifyClient.Resources.Run do
   Client for managing a specific actor run.
   """
 
-  use ApifyClient.Base.ResourceClient, resource_path: "runs"
+  use ApifyClient.Base.ResourceClient, resource_path: "actor-runs"
 
   alias ApifyClient.Resources.{Dataset, KeyValueStore, Log, RequestQueue}
 

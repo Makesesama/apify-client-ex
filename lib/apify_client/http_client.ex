@@ -342,6 +342,7 @@ defmodule ApifyClient.HTTPClient do
   end
 
   defp stream_next(:continue), do: receive_stream_chunks()
+  defp stream_next({chunks, :continue}) when is_list(chunks), do: {chunks, :continue}
   defp stream_next({:halt, result}), do: {:halt, result}
 
   defp stream_after(:ok), do: :ok

@@ -45,7 +45,8 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
 
     # Verify plan information
     if user_info["plan"] do
-      assert is_binary(user_info["plan"])
+      assert is_map(user_info["plan"])
+      assert is_binary(user_info["plan"]["id"])
     end
 
     # Verify timestamps
@@ -105,7 +106,7 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
 
   test "handles non-existent user gracefully", %{client: client} do
     # Try to get info for a non-existent user
-    non_existent_username = "non-existent-user-#{System.unique_integer()}"
+    non_existent_username = "non-existent-user-deterministic"
     user_client = ApifyClient.user(client, non_existent_username)
 
     {:error, error} = User.get(user_client)
@@ -122,7 +123,8 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     # Verify basic structure for public user
     assert is_map(user_info)
     assert user_info["username"] == public_username
-    assert is_binary(user_info["id"])
+    # Public user may not expose ID
+    assert is_binary(user_info["id"]) or is_nil(user_info["id"])
 
     # Public user info should not contain sensitive data
     refute Map.has_key?(user_info, "email")

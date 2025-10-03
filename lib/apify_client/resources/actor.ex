@@ -14,6 +14,12 @@ defmodule ApifyClient.Resources.Actor do
     WebhookCollection
   }
 
+  # Override safe_id to handle actor-specific ID encoding (slash to tilde)
+  def safe_id(id) when is_binary(id) do
+    # For actors, convert slash to tilde as per API docs
+    String.replace(id, "/", "~")
+  end
+
   @type call_options :: %{
           optional(:build) => String.t(),
           optional(:content_type) => String.t(),
@@ -177,16 +183,22 @@ defmodule ApifyClient.Resources.Actor do
   # Private helper functions
 
   defp build_call_params(options) do
-    options
+    # Convert keyword list to map if needed
+    options_map = if is_list(options), do: Map.new(options), else: options
+
+    options_map
     |> Map.take([:build, :memory, :timeout, :wait_for_finish, :max_items, :max_total_charge_usd])
     |> Map.new(fn {k, v} -> {Atom.to_string(k), v} end)
-    |> Map.put("webhooks", encode_webhooks(options[:webhooks]))
+    |> Map.put("webhooks", encode_webhooks(options_map[:webhooks]))
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
     |> Map.new()
   end
 
   defp build_call_opts(options) do
-    case options[:content_type] do
+    # Convert keyword list to map if needed
+    options_map = if is_list(options), do: Map.new(options), else: options
+
+    case options_map[:content_type] do
       nil -> []
       content_type -> [content_type: content_type]
     end

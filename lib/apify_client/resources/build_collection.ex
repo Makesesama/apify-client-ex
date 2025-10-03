@@ -15,7 +15,8 @@ defmodule ApifyClient.Resources.BuildCollection do
     }
 
     if actor_id do
-      %{collection | base_url: "#{collection.base_url}/acts/#{actor_id}"}
+      safe_actor_id = ApifyClient.Resources.Actor.safe_id(actor_id)
+      %{collection | base_url: "#{collection.base_url}/acts/#{safe_actor_id}"}
     else
       collection
     end
@@ -30,8 +31,4 @@ defmodule ApifyClient.Resources.BuildCollection do
     end
   end
 
-  # Also override the 2-arity version
-  def url(collection, path) do
-    "#{url(collection)}/#{path}"
-  end
 end
