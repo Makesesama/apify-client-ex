@@ -47,7 +47,7 @@ defmodule ApifyClient.MixProject do
       {:excoveralls, "~> 0.18", only: :test},
       {:bypass, "~> 2.1", only: :test},
       {:mox, "~> 1.1", only: :test},
-      {:reqord, github: "Makesesama/reqord", branch: "main", only: :test}
+      {:reqord, github: "Makesesama/reqord", branch: "async-writer", only: :test}
     ]
   end
 

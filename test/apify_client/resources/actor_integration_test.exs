@@ -22,7 +22,7 @@ defmodule ApifyClient.Resources.ActorIntegrationTest do
 
   use Reqord.Case
 
-  alias ApifyClient.Resources.Actor
+  alias ApifyClient.Resources.{Actor, ActorCollection, BuildCollection, RunCollection}
 
   @moduletag :integration
 
@@ -43,7 +43,8 @@ defmodule ApifyClient.Resources.ActorIntegrationTest do
 
     # Verify the response structure
     assert is_map(actor_data)
-    assert is_binary(actor_data["id"])  # API returns the actual numeric ID
+    # API returns the actual numeric ID
+    assert is_binary(actor_data["id"])
     assert is_binary(actor_data["name"])
     assert is_binary(actor_data["username"])
     assert is_map(actor_data["stats"])
@@ -55,11 +56,12 @@ defmodule ApifyClient.Resources.ActorIntegrationTest do
   test "lists actors with pagination", %{client: client} do
     actors_collection = ApifyClient.actors(client)
 
-    {:ok, actors_list} = ApifyClient.Resources.ActorCollection.list(
-      actors_collection,
-      limit: 5,
-      offset: 0
-    )
+    {:ok, actors_list} =
+      ActorCollection.list(
+        actors_collection,
+        limit: 5,
+        offset: 0
+      )
 
     # Verify the response structure
     assert is_map(actors_list)
@@ -88,10 +90,11 @@ defmodule ApifyClient.Resources.ActorIntegrationTest do
     actor_client = Actor.new(client, actor_id)
     builds_collection = Actor.builds(actor_client)
 
-    {:ok, builds_list} = ApifyClient.Resources.BuildCollection.list(
-      builds_collection,
-      limit: 3
-    )
+    {:ok, builds_list} =
+      BuildCollection.list(
+        builds_collection,
+        limit: 3
+      )
 
     # Verify the response structure
     assert is_map(builds_list)
@@ -115,10 +118,11 @@ defmodule ApifyClient.Resources.ActorIntegrationTest do
     actor_client = Actor.new(client, actor_id)
     runs_collection = Actor.runs(actor_client)
 
-    {:ok, runs_list} = ApifyClient.Resources.RunCollection.list(
-      runs_collection,
-      limit: 3
-    )
+    {:ok, runs_list} =
+      RunCollection.list(
+        runs_collection,
+        limit: 3
+      )
 
     # Verify the response structure
     assert is_map(runs_list)

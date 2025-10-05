@@ -17,21 +17,24 @@ defmodule ApifyClientTest.ReqordSetup do
     reqord_value = System.get_env("REQORD")
     record_mode = reqord_value in ["all", "new_episodes", "once"]
 
-    token = if record_mode do
-      # Try multiple ways to get the token in record mode
-      apify_token = System.get_env("APIFY_TOKEN") ||
-                   Application.get_env(:apify_client, :test_token) ||
-                   System.get_env("APIFY_API_TOKEN")  # Alternative name
+    token =
+      if record_mode do
+        # Try multiple ways to get the token in record mode
+        # Alternative name
+        apify_token =
+          System.get_env("APIFY_TOKEN") ||
+            Application.get_env(:apify_client, :test_token) ||
+            System.get_env("APIFY_API_TOKEN")
 
-      if apify_token && apify_token != "" do
-        apify_token
+        if apify_token && apify_token != "" do
+          apify_token
+        else
+          raise("APIFY_TOKEN environment variable required when REQORD=#{reqord_value}")
+        end
       else
-        raise("APIFY_TOKEN environment variable required when REQORD=#{reqord_value}")
+        # Use mock token for replay
+        "test-token-for-replay"
       end
-    else
-      # Use mock token for replay
-      "test-token-for-replay"
-    end
 
     ApifyClient.new(token: token)
   end

@@ -21,7 +21,7 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
 
   use Reqord.Case
 
-  alias ApifyClient.Resources.User
+  alias ApifyClient.Resources.{User, WebhookDispatchCollection}
 
   @moduletag :integration
 
@@ -74,6 +74,7 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
       if Map.has_key?(usage_info, "totalUsageCreditsUsd") do
         # Complex billing structure
         assert is_number(usage_info["totalUsageCreditsUsd"])
+
         if Map.has_key?(usage_info, "aggregatedUsage") do
           assert is_map(usage_info["aggregatedUsage"])
         end
@@ -140,11 +141,12 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     user_client = ApifyClient.user(client, "me")
     webhooks_collection = User.webhook_dispatches(user_client)
 
-    {:ok, dispatches_list} = ApifyClient.Resources.WebhookDispatchCollection.list(
-			       webhooks_collection,
-			       limit: 10,
-			       offset: 0
-			     )
+    {:ok, dispatches_list} =
+      WebhookDispatchCollection.list(
+        webhooks_collection,
+        limit: 10,
+        offset: 0
+      )
 
     # Verify the response structure
     assert is_map(dispatches_list)
@@ -217,6 +219,7 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     case User.monthly_usage(other_user_client) do
       {:error, error} ->
         assert error.type in [:authorization_error, :not_found_error, :forbidden_error]
+
       {:ok, _} ->
         # Some APIs might return empty or limited data instead of error
         :ok

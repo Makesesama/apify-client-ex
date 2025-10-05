@@ -49,9 +49,14 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
     {:ok, client: client, user_client: user_client, initial_usage: initial_usage}
   end
 
-  test "executes actor and tracks costs", %{client: client, user_client: user_client, initial_usage: initial_usage} do
+  test "executes actor and tracks costs", %{
+    client: client,
+    user_client: user_client,
+    initial_usage: initial_usage
+  } do
     # Use a fast, minimal actor for testing
-    actor_id = "apify/hello-world"  # Simple actor that just returns a greeting
+    # Simple actor that just returns a greeting
+    actor_id = "apify/hello-world"
     actor_client = Actor.new(client, actor_id)
 
     # Check if we're in record mode to decide on actual execution
@@ -63,10 +68,17 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
     end
 
     # Start the actor with minimal input
-    {:ok, run_info} = Actor.call(actor_client, %{
-      message: "Hello from Elixir integration test!",
-      outputDatasetId: nil  # Let Apify create a new dataset
-    }, wait_for_finish: 60)  # Wait up to 60 seconds
+    {:ok, run_info} =
+      Actor.call(
+        actor_client,
+        %{
+          message: "Hello from Elixir integration test!",
+          # Let Apify create a new dataset
+          outputDatasetId: nil
+        },
+        # Wait up to 60 seconds
+        wait_for_finish: 60
+      )
 
     # Verify run information
     assert is_binary(run_info["id"])
@@ -107,7 +119,8 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
 
     # Wait a moment for usage to update (in record mode)
     if record_mode do
-      :timer.sleep(2000)  # Wait 2 seconds for usage stats to update
+      # Wait 2 seconds for usage stats to update
+      :timer.sleep(2000)
     end
 
     # Get final usage and calculate cost
@@ -122,12 +135,14 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
       IO.puts("\n💰 COST REPORT:")
       IO.puts("   Initial compute usage: #{initial_compute}")
       IO.puts("   Final compute usage: #{final_compute}")
+
       if compute_used > 0 do
         IO.puts("   Compute units used: #{compute_used}")
         IO.puts("   Estimated cost: $#{Float.round(compute_used * 0.25, 4)} USD")
       else
         IO.puts("   Compute units used: <0.01 (usage may not have updated yet)")
       end
+
       IO.puts("   Note: Usage statistics may take a few minutes to update")
     end
 
@@ -141,7 +156,11 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
     end
   end
 
-  test "executes web scraper with minimal input", %{client: client, user_client: user_client, initial_usage: initial_usage} do
+  test "executes web scraper with minimal input", %{
+    client: client,
+    user_client: user_client,
+    initial_usage: initial_usage
+  } do
     actor_id = "apify/web-scraper"
     actor_client = Actor.new(client, actor_id)
 
@@ -153,21 +172,35 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
     end
 
     # Execute with very minimal settings to reduce cost
-    {:ok, run_info} = Actor.call(actor_client, %{
-      startUrls: [%{url: "https://example.com"}],  # Single, simple page
-      maxPagesPerCrawl: 1,  # Limit to 1 page only
-      maxResults: 1,        # Limit results
-      maxCrawlingDepth: 0,  # No following links
-      pageFunction: "context => ({ url: context.request.url, title: context.request.userData.title || 'No title' })",
-      proxyConfiguration: %{
-        useApifyProxy: true,
-        groups: ["BUYPROXIES94952"],
-        apifyProxyGroups: ["BUYPROXIES94952"]
-      }  # Use Apify proxy with explicit configuration
-    }, %{
-      timeout: 120,  # 2 minute timeout
-      wait_for_finish: 120  # Wait up to 2 minutes
-    })
+    {:ok, run_info} =
+      Actor.call(
+        actor_client,
+        %{
+          # Single, simple page
+          startUrls: [%{url: "https://example.com"}],
+          # Limit to 1 page only
+          maxPagesPerCrawl: 1,
+          # Limit results
+          maxResults: 1,
+          # No following links
+          maxCrawlingDepth: 0,
+          pageFunction:
+            "context => ({ url: context.request.url, title: context.request.userData.title || 'No title' })",
+          proxyConfiguration: %{
+            useApifyProxy: true,
+            groups: ["BUYPROXIES94952"],
+            apifyProxyGroups: ["BUYPROXIES94952"]
+          }
+
+          # Use Apify proxy with explicit configuration
+        },
+        %{
+          # 2 minute timeout
+          timeout: 120,
+          # Wait up to 2 minutes
+          wait_for_finish: 120
+        }
+      )
 
     assert is_binary(run_info["id"])
     # ActorId might be nil in some cases
@@ -196,6 +229,7 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
 
         if record_mode do
           IO.puts("📊 Scraped items: #{length(items)}")
+
           if length(items) > 0 do
             first_item = List.first(items)
             IO.puts("📄 Sample scraped data:")
@@ -208,7 +242,8 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
 
     # Calculate final costs
     if record_mode do
-      :timer.sleep(3000)  # Wait longer for web scraper usage to update
+      # Wait longer for web scraper usage to update
+      :timer.sleep(3000)
     end
 
     {:ok, final_usage} = User.monthly_usage(user_client)
@@ -219,10 +254,15 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
 
     if record_mode do
       IO.puts("\n💰 WEB SCRAPER COST REPORT:")
-      IO.puts("   Compute units used: #{if compute_used > 0, do: compute_used, else: "<0.01 (may not be updated yet)"}")
+
+      IO.puts(
+        "   Compute units used: #{if compute_used > 0, do: compute_used, else: "<0.01 (may not be updated yet)"}"
+      )
+
       if compute_used > 0 do
         IO.puts("   Estimated cost: $#{Float.round(compute_used * 0.25, 4)} USD")
       end
+
       IO.puts("   Pages scraped: 1 (example.com)")
       IO.puts("   Run time: #{detailed_run["runTimeSecs"] || "unknown"} seconds")
     end
@@ -235,10 +275,16 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
     actor_client = Actor.new(client, actor_id)
 
     # Try to execute with invalid input to test error handling
-    case Actor.call(actor_client, %{
-      startUrls: "invalid-input",  # Should be an array
-      maxPagesPerCrawl: -1         # Invalid negative value
-    }, timeout: 30) do
+    case Actor.call(
+           actor_client,
+           %{
+             # Should be an array
+             startUrls: "invalid-input",
+             # Invalid negative value
+             maxPagesPerCrawl: -1
+           },
+           timeout: 30
+         ) do
       {:error, error} ->
         # Should get a validation error
         assert error.type in [:validation_error, :client_error]
@@ -255,5 +301,4 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
         assert run_status["status"] in ["FAILED", "ABORTED", "SUCCEEDED", "RUNNING"]
     end
   end
-
 end

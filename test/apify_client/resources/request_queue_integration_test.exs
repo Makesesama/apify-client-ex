@@ -31,11 +31,12 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
   test "lists request queues with pagination", %{client: client} do
     queues_collection = ApifyClient.request_queues(client)
 
-    {:ok, queues_list} = RequestQueueCollection.list(
-      queues_collection,
-      limit: 5,
-      offset: 0
-    )
+    {:ok, queues_list} =
+      RequestQueueCollection.list(
+        queues_collection,
+        limit: 5,
+        offset: 0
+      )
 
     # Verify the response structure
     assert is_map(queues_list)
@@ -49,10 +50,11 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
     queues_collection = ApifyClient.request_queues(client)
 
     # Create a new request queue
-    {:ok, created_queue} = RequestQueueCollection.create(
-      queues_collection,
-      %{name: "test-queue-lifecycle"}
-    )
+    {:ok, created_queue} =
+      RequestQueueCollection.create(
+        queues_collection,
+        %{name: "test-queue-lifecycle"}
+      )
 
     assert is_binary(created_queue["id"])
     # Note: name might be nil if not set by the API
@@ -88,6 +90,7 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
 
     # Test getting requests from queue
     {:ok, request1} = RequestQueue.get_request(queue_client)
+
     if request1 && request1["id"] do
       assert is_map(request1)
       assert is_binary(request1["id"])
@@ -95,27 +98,30 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
     else
       # If head is empty, try listing requests to verify they were added
       {:ok, requests_list} = RequestQueue.list_requests(queue_client, limit: 1)
+
       if requests_list && length(requests_list["items"]) > 0 do
         first_request = List.first(requests_list["items"])
         assert is_map(first_request)
         assert is_binary(first_request["id"])
         assert first_request["url"] in ["https://example.com/page1", "https://example.com/page2"]
         # Use the first request for subsequent tests
-        request1 = first_request
+        _request1 = first_request
       else
-        request1 = nil
+        _request1 = nil
       end
     end
 
     # Test updating request (mark as handled)
     if request1 && request1["id"] do
-      {:ok, _} = RequestQueue.update_request(queue_client, request1["id"], %{
-        handledAt: DateTime.utc_now() |> DateTime.to_iso8601()
-      })
+      {:ok, _} =
+        RequestQueue.update_request(queue_client, request1["id"], %{
+          handledAt: DateTime.utc_now() |> DateTime.to_iso8601()
+        })
     end
 
     # Test getting another request
     {:ok, request2} = RequestQueue.get_request(queue_client)
+
     if request2 && request1 && request2["id"] && request1["id"] do
       assert request2["id"] != request1["id"]
     end
@@ -150,25 +156,27 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
   test "batch operations on request queue", %{client: client} do
     queues_collection = ApifyClient.request_queues(client)
 
-    {:ok, created_queue} = RequestQueueCollection.create(
-      queues_collection,
-      %{name: "test-queue-batch"}
-    )
+    {:ok, created_queue} =
+      RequestQueueCollection.create(
+        queues_collection,
+        %{name: "test-queue-batch"}
+      )
 
     queue_client = ApifyClient.request_queue(client, created_queue["id"])
 
     # Add multiple requests in batch
-    batch_requests = for i <- 1..5 do
-      %{
-        "url" => "https://example.com/batch-#{i}",
-        "method" => "GET",
-        "uniqueKey" => "batch-request-#{i}",
-        "userData" => %{
-          "index" => i,
-          "batch" => true
+    batch_requests =
+      for i <- 1..5 do
+        %{
+          "url" => "https://example.com/batch-#{i}",
+          "method" => "GET",
+          "uniqueKey" => "batch-request-#{i}",
+          "userData" => %{
+            "index" => i,
+            "batch" => true
+          }
         }
-      }
-    end
+      end
 
     {:ok, _} = RequestQueue.batch_add_requests(queue_client, batch_requests)
 
@@ -200,19 +208,34 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
   test "request queue with different HTTP methods", %{client: client} do
     queues_collection = ApifyClient.request_queues(client)
 
-    {:ok, created_queue} = RequestQueueCollection.create(
-      queues_collection,
-      %{name: "test-queue-methods"}
-    )
+    {:ok, created_queue} =
+      RequestQueueCollection.create(
+        queues_collection,
+        %{name: "test-queue-methods"}
+      )
 
     queue_client = ApifyClient.request_queue(client, created_queue["id"])
 
     # Test different HTTP methods
     methods_requests = [
       %{"url" => "https://api.example.com/get", "method" => "GET", "uniqueKey" => "get-request"},
-      %{"url" => "https://api.example.com/post", "method" => "POST", "payload" => %{"data" => "test"}, "uniqueKey" => "post-request"},
-      %{"url" => "https://api.example.com/put", "method" => "PUT", "payload" => %{"update" => true}, "uniqueKey" => "put-request"},
-      %{"url" => "https://api.example.com/delete", "method" => "DELETE", "uniqueKey" => "delete-request"}
+      %{
+        "url" => "https://api.example.com/post",
+        "method" => "POST",
+        "payload" => %{"data" => "test"},
+        "uniqueKey" => "post-request"
+      },
+      %{
+        "url" => "https://api.example.com/put",
+        "method" => "PUT",
+        "payload" => %{"update" => true},
+        "uniqueKey" => "put-request"
+      },
+      %{
+        "url" => "https://api.example.com/delete",
+        "method" => "DELETE",
+        "uniqueKey" => "delete-request"
+      }
     ]
 
     for request <- methods_requests do
@@ -231,10 +254,11 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
   test "handles request with custom headers and user data", %{client: client} do
     queues_collection = ApifyClient.request_queues(client)
 
-    {:ok, created_queue} = RequestQueueCollection.create(
-      queues_collection,
-      %{name: "test-queue-custom-data"}
-    )
+    {:ok, created_queue} =
+      RequestQueueCollection.create(
+        queues_collection,
+        %{name: "test-queue-custom-data"}
+      )
 
     queue_client = ApifyClient.request_queue(client, created_queue["id"])
 
@@ -262,6 +286,7 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
 
     # Get the request back and verify custom data
     {:ok, retrieved_request} = RequestQueue.get_request(queue_client)
+
     if retrieved_request && retrieved_request["url"] do
       assert retrieved_request["url"] == "https://api.example.com/custom"
       assert retrieved_request["method"] == "GET"
@@ -270,6 +295,7 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
     else
       # If head is empty, try listing requests to see if it was added
       {:ok, requests_list} = RequestQueue.list_requests(queue_client, limit: 1)
+
       if requests_list && length(requests_list["items"]) > 0 do
         first_request = List.first(requests_list["items"])
         assert first_request["url"] == "https://api.example.com/custom"
@@ -287,10 +313,11 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
     queues_collection = ApifyClient.request_queues(client)
 
     # Create a queue
-    {:ok, created_queue} = RequestQueueCollection.create(
-      queues_collection,
-      %{name: "test-queue-update"}
-    )
+    {:ok, created_queue} =
+      RequestQueueCollection.create(
+        queues_collection,
+        %{name: "test-queue-update"}
+      )
 
     queue_client = ApifyClient.request_queue(client, created_queue["id"])
 
@@ -310,11 +337,12 @@ defmodule ApifyClient.Resources.RequestQueueIntegrationTest do
   test "filters queues by name", %{client: client} do
     queues_collection = ApifyClient.request_queues(client)
 
-    {:ok, queues_list} = RequestQueueCollection.list(
-      queues_collection,
-      limit: 10,
-      search: "test"
-    )
+    {:ok, queues_list} =
+      RequestQueueCollection.list(
+        queues_collection,
+        limit: 10,
+        search: "test"
+      )
 
     # Verify the response structure
     assert is_map(queues_list)

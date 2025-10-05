@@ -25,8 +25,11 @@ defmodule ApifyClient.IntegrationExampleTest do
   alias ApifyClient.Resources.{
     Actor,
     Dataset,
+    DatasetCollection,
     KeyValueStore,
+    KeyValueStoreCollection,
     RequestQueue,
+    RequestQueueCollection,
     User
   }
 
@@ -50,10 +53,12 @@ defmodule ApifyClient.IntegrationExampleTest do
 
     # 2. Create a key-value store for configuration
     stores_collection = ApifyClient.key_value_stores(client)
-    {:ok, config_store} = ApifyClient.Resources.KeyValueStoreCollection.create(
-      stores_collection,
-      %{name: "test-scraper-config"}
-    )
+
+    {:ok, config_store} =
+      KeyValueStoreCollection.create(
+        stores_collection,
+        %{name: "test-scraper-config"}
+      )
 
     store_client = ApifyClient.key_value_store(client, config_store["id"])
 
@@ -68,18 +73,32 @@ defmodule ApifyClient.IntegrationExampleTest do
 
     # 3. Create a request queue with target URLs
     queues_collection = ApifyClient.request_queues(client)
-    {:ok, url_queue} = ApifyClient.Resources.RequestQueueCollection.create(
-      queues_collection,
-      %{name: "test-scraper-urls"}
-    )
+
+    {:ok, url_queue} =
+      RequestQueueCollection.create(
+        queues_collection,
+        %{name: "test-scraper-urls"}
+      )
 
     queue_client = ApifyClient.request_queue(client, url_queue["id"])
 
     # Add URLs to scrape
     target_urls = [
-      %{"url" => "https://example.com", "userData" => %{"label" => "homepage"}, "uniqueKey" => "homepage"},
-      %{"url" => "https://example.com/about", "userData" => %{"label" => "about"}, "uniqueKey" => "about"},
-      %{"url" => "https://example.com/contact", "userData" => %{"label" => "contact"}, "uniqueKey" => "contact"}
+      %{
+        "url" => "https://example.com",
+        "userData" => %{"label" => "homepage"},
+        "uniqueKey" => "homepage"
+      },
+      %{
+        "url" => "https://example.com/about",
+        "userData" => %{"label" => "about"},
+        "uniqueKey" => "about"
+      },
+      %{
+        "url" => "https://example.com/contact",
+        "userData" => %{"label" => "contact"},
+        "uniqueKey" => "contact"
+      }
     ]
 
     for url_request <- target_urls do
@@ -108,10 +127,12 @@ defmodule ApifyClient.IntegrationExampleTest do
 
     # 6. Create a dataset to simulate scraped data
     datasets_collection = ApifyClient.datasets(client)
-    {:ok, results_dataset} = ApifyClient.Resources.DatasetCollection.create(
-      datasets_collection,
-      %{name: "test-scraper-results"}
-    )
+
+    {:ok, results_dataset} =
+      DatasetCollection.create(
+        datasets_collection,
+        %{name: "test-scraper-results"}
+      )
 
     dataset_client = ApifyClient.dataset(client, results_dataset["id"])
 
@@ -142,7 +163,7 @@ defmodule ApifyClient.IntegrationExampleTest do
     {:ok, csv_data} = Dataset.list_items(dataset_client, %{format: "csv"})
     # CSV may have BOM prefix and different column order, so check individual headers
     assert String.contains?(csv_data, "url") and String.contains?(csv_data, "title") and
-           String.contains?(csv_data, "text") and String.contains?(csv_data, "timestamp")
+             String.contains?(csv_data, "text") and String.contains?(csv_data, "timestamp")
 
     # 9. Store results summary in key-value store
     results_summary = %{
@@ -195,9 +216,10 @@ defmodule ApifyClient.IntegrationExampleTest do
     stores_collection = ApifyClient.key_value_stores(client)
 
     # Try to create store with invalid name (if API validates this)
-    case ApifyClient.Resources.KeyValueStoreCollection.create(stores_collection, %{name: ""}) do
+    case KeyValueStoreCollection.create(stores_collection, %{name: ""}) do
       {:error, error} ->
         assert error.type in [:validation_error, :client_error]
+
       {:ok, store} ->
         # Some APIs might allow empty names, clean up if created
         ApifyClient.key_value_store(client, store["id"]) |> KeyValueStore.delete()
@@ -208,50 +230,53 @@ defmodule ApifyClient.IntegrationExampleTest do
     # Test that we can perform multiple operations concurrently
     # (This mainly tests that our client handles concurrent requests properly)
 
-    IO.puts("DEBUG: Starting concurrent operations test")
-
     # Create multiple resources sequentially (testing if concurrency is the issue)
     unique_suffix = "concurrent-workflow-deterministic"
-    IO.puts("DEBUG: Creating resources sequentially with suffix: #{unique_suffix}")
 
-    result1 = ApifyClient.datasets(client)
-              |> ApifyClient.Resources.DatasetCollection.create(%{name: "test-dataset-#{unique_suffix}"})
-    IO.puts("DEBUG: Dataset result: #{inspect(result1)}")
+    result1 =
+      ApifyClient.datasets(client)
+      |> DatasetCollection.create(%{name: "test-dataset-#{unique_suffix}"})
 
-    result2 = ApifyClient.key_value_stores(client)
-              |> ApifyClient.Resources.KeyValueStoreCollection.create(%{name: "test-kvstore-#{unique_suffix}"})
-    IO.puts("DEBUG: KV store result: #{inspect(result2)}")
+    result2 =
+      ApifyClient.key_value_stores(client)
+      |> KeyValueStoreCollection.create(%{
+        name: "test-kvstore-#{unique_suffix}"
+      })
 
-    result3 = ApifyClient.request_queues(client)
-              |> ApifyClient.Resources.RequestQueueCollection.create(%{name: "test-queue-#{unique_suffix}"})
-    IO.puts("DEBUG: Queue result: #{inspect(result3)}")
+    result3 =
+      ApifyClient.request_queues(client)
+      |> RequestQueueCollection.create(%{
+        name: "test-queue-#{unique_suffix}"
+      })
 
     results = [result1, result2, result3]
-    IO.puts("DEBUG: All results: #{inspect(results)}")
 
     # Verify all operations succeeded
     assert length(results) == 3
     created_resources = Enum.map(results, fn {:ok, resource} -> resource end)
-    IO.puts("DEBUG: Created resources: #{inspect(created_resources)}")
 
     # Clean up
-    IO.puts("DEBUG: Starting cleanup for #{length(created_resources)} resources")
     for resource <- created_resources do
       case resource do
         %{"id" => id} when is_binary(id) ->
           # Determine resource type and clean up appropriately
           resource_name = resource["name"] || ""
+
           cond do
             String.contains?(resource_name, "dataset-concurrent-workflow-deterministic") ->
               ApifyClient.dataset(client, id) |> Dataset.delete()
+
             String.contains?(resource_name, "kvstore-concurrent-workflow-deterministic") ->
               ApifyClient.key_value_store(client, id) |> KeyValueStore.delete()
+
             String.contains?(resource_name, "queue-concurrent-workflow-deterministic") ->
               ApifyClient.request_queue(client, id) |> RequestQueue.delete()
+
             true ->
               # If we can't determine the type, try to delete as a dataset (most common)
               ApifyClient.dataset(client, id) |> Dataset.delete()
           end
+
         _ ->
           :ok
       end

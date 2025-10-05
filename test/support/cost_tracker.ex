@@ -53,7 +53,10 @@ defmodule ApifyClientTest.CostTracker do
       if cost_diff.data_transfer.used > 0 do
         IO.puts("📡 Data Transfer:")
         IO.puts("   Used: #{format_bytes(cost_diff.data_transfer.used)}")
-        IO.puts("   Estimated cost: $#{estimate_data_transfer_cost(cost_diff.data_transfer.used)} USD")
+
+        IO.puts(
+          "   Estimated cost: $#{estimate_data_transfer_cost(cost_diff.data_transfer.used)} USD"
+        )
       end
 
       # Storage
@@ -78,8 +81,8 @@ defmodule ApifyClientTest.CostTracker do
 
       total_estimated_cost =
         estimate_compute_cost(cost_diff.compute.used) +
-        estimate_data_transfer_cost(cost_diff.data_transfer.used) +
-        estimate_storage_cost(cost_diff.storage.used)
+          estimate_data_transfer_cost(cost_diff.data_transfer.used) +
+          estimate_storage_cost(cost_diff.storage.used)
 
       if total_estimated_cost > 0 do
         IO.puts("💸 Total Estimated Cost: $#{Float.round(total_estimated_cost, 4)} USD")
@@ -101,37 +104,51 @@ defmodule ApifyClientTest.CostTracker do
     record_mode = System.get_env("REQORD") != nil
 
     if record_mode do
-      IO.puts("⏳ Waiting for usage statistics to update...")
-
-      Enum.reduce_while(1..max_retries, initial_usage, fn attempt, _acc ->
-        :timer.sleep(2000 * attempt)  # Exponential backoff
-
-        case get_usage(client) do
-          {:ok, new_usage} ->
-            cost_diff = calculate_cost_diff(initial_usage, new_usage)
-
-            if cost_diff.compute.used > 0 do
-              IO.puts("✅ Usage statistics updated after #{attempt} attempt(s)")
-              {:halt, new_usage}
-            else
-              if attempt < max_retries do
-                IO.puts("⏳ Still waiting... (attempt #{attempt}/#{max_retries})")
-                {:cont, new_usage}
-              else
-                IO.puts("⚠️  Usage statistics may not have updated yet")
-                {:halt, new_usage}
-              end
-            end
-
-          {:error, _error} ->
-            {:halt, initial_usage}
-        end
-      end)
+      wait_for_record_mode_update(client, initial_usage, max_retries)
     else
+      wait_for_replay_mode_update(client, initial_usage)
+    end
+  end
+
+  defp wait_for_record_mode_update(client, initial_usage, max_retries) do
+    IO.puts("⏳ Waiting for usage statistics to update...")
+
+    Enum.reduce_while(1..max_retries, initial_usage, fn attempt, _acc ->
+      # Exponential backoff
+      :timer.sleep(2000 * attempt)
+
       case get_usage(client) do
-        {:ok, usage} -> usage
-        {:error, _} -> initial_usage
+        {:ok, new_usage} ->
+          handle_usage_update(initial_usage, new_usage, attempt, max_retries)
+
+        {:error, _error} ->
+          {:halt, initial_usage}
       end
+    end)
+  end
+
+  defp wait_for_replay_mode_update(client, initial_usage) do
+    case get_usage(client) do
+      {:ok, usage} -> usage
+      {:error, _} -> initial_usage
+    end
+  end
+
+  defp handle_usage_update(initial_usage, new_usage, attempt, max_retries) do
+    cost_diff = calculate_cost_diff(initial_usage, new_usage)
+
+    cond do
+      cost_diff.compute.used > 0 ->
+        IO.puts("✅ Usage statistics updated after #{attempt} attempt(s)")
+        {:halt, new_usage}
+
+      attempt < max_retries ->
+        IO.puts("⏳ Still waiting... (attempt #{attempt}/#{max_retries})")
+        {:cont, new_usage}
+
+      true ->
+        IO.puts("⚠️  Usage statistics may not have updated yet")
+        {:halt, new_usage}
     end
   end
 
@@ -139,20 +156,21 @@ defmodule ApifyClientTest.CostTracker do
 
   defp calculate_metric_diff(initial_usage, final_usage, metric_key) do
     # Handle both simple and complex billing structures
-    {initial_value, final_value} = case {initial_usage, final_usage} do
-      # Simple structure
-      {%{^metric_key => %{"usage" => init}}, %{^metric_key => %{"usage" => final}}} ->
-        {init || 0, final || 0}
+    {initial_value, final_value} =
+      case {initial_usage, final_usage} do
+        # Simple structure
+        {%{^metric_key => %{"usage" => init}}, %{^metric_key => %{"usage" => final}}} ->
+          {init || 0, final || 0}
 
-      # Complex billing structure - extract from aggregatedUsage or fall back to 0
-      {init_map, final_map} when is_map(init_map) and is_map(final_map) ->
-        init_val = get_billing_usage(init_map, metric_key)
-        final_val = get_billing_usage(final_map, metric_key)
-        {init_val, final_val}
+        # Complex billing structure - extract from aggregatedUsage or fall back to 0
+        {init_map, final_map} when is_map(init_map) and is_map(final_map) ->
+          init_val = get_billing_usage(init_map, metric_key)
+          final_val = get_billing_usage(final_map, metric_key)
+          {init_val, final_val}
 
-      _ ->
-        {0, 0}
-    end
+        _ ->
+          {0, 0}
+      end
 
     used = final_value - initial_value
 
@@ -173,18 +191,35 @@ defmodule ApifyClientTest.CostTracker do
 
   defp get_billing_usage(usage_map, "dataTransfer") do
     # Look for data transfer in the new format or legacy format
-    external = get_in(usage_map, ["monthlyServiceUsage", "DATA_TRANSFER_EXTERNAL_GBYTES", "quantity"]) ||
-               get_in(usage_map, ["aggregatedUsage", "DATA_TRANSFER_GBYTES", "quantity"]) || 0
-    internal = get_in(usage_map, ["monthlyServiceUsage", "DATA_TRANSFER_INTERNAL_GBYTES", "quantity"]) || 0
+    external =
+      get_in(usage_map, ["monthlyServiceUsage", "DATA_TRANSFER_EXTERNAL_GBYTES", "quantity"]) ||
+        get_in(usage_map, ["aggregatedUsage", "DATA_TRANSFER_GBYTES", "quantity"]) || 0
+
+    internal =
+      get_in(usage_map, ["monthlyServiceUsage", "DATA_TRANSFER_INTERNAL_GBYTES", "quantity"]) || 0
+
     external + internal
   end
 
   defp get_billing_usage(usage_map, "storage") do
     # Look for storage in the new format or legacy format (dataset + kv store)
-    dataset_storage = get_in(usage_map, ["monthlyServiceUsage", "DATASET_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) ||
-                      get_in(usage_map, ["aggregatedUsage", "DATASET_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) || 0
-    kv_storage = get_in(usage_map, ["monthlyServiceUsage", "KEY_VALUE_STORE_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) ||
-                 get_in(usage_map, ["aggregatedUsage", "KEY_VALUE_STORE_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) || 0
+    dataset_storage =
+      get_in(usage_map, ["monthlyServiceUsage", "DATASET_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) ||
+        get_in(usage_map, ["aggregatedUsage", "DATASET_TIMED_STORAGE_GBYTE_HOURS", "quantity"]) ||
+        0
+
+    kv_storage =
+      get_in(usage_map, [
+        "monthlyServiceUsage",
+        "KEY_VALUE_STORE_TIMED_STORAGE_GBYTE_HOURS",
+        "quantity"
+      ]) ||
+        get_in(usage_map, [
+          "aggregatedUsage",
+          "KEY_VALUE_STORE_TIMED_STORAGE_GBYTE_HOURS",
+          "quantity"
+        ]) || 0
+
     dataset_storage + kv_storage
   end
 
@@ -195,6 +230,7 @@ defmodule ApifyClientTest.CostTracker do
     # Approximate $0.25 per compute unit for pay-as-you-go
     Float.round(compute_units * 0.25, 4)
   end
+
   defp estimate_compute_cost(_), do: 0.0
 
   defp estimate_data_transfer_cost(bytes) when bytes > 0 do
@@ -202,6 +238,7 @@ defmodule ApifyClientTest.CostTracker do
     gb = bytes / (1024 * 1024 * 1024)
     Float.round(gb * 0.10, 4)
   end
+
   defp estimate_data_transfer_cost(_), do: 0.0
 
   defp estimate_storage_cost(bytes) when bytes > 0 do
@@ -209,15 +246,19 @@ defmodule ApifyClientTest.CostTracker do
     gb = bytes / (1024 * 1024 * 1024)
     Float.round(gb * 0.02, 4)
   end
+
   defp estimate_storage_cost(_), do: 0.0
 
   defp format_bytes(bytes) when bytes < 1024, do: "#{bytes} B"
+
   defp format_bytes(bytes) when bytes < 1024 * 1024 do
     "#{Float.round(bytes / 1024, 2)} KB"
   end
+
   defp format_bytes(bytes) when bytes < 1024 * 1024 * 1024 do
     "#{Float.round(bytes / (1024 * 1024), 2)} MB"
   end
+
   defp format_bytes(bytes) do
     "#{Float.round(bytes / (1024 * 1024 * 1024), 2)} GB"
   end

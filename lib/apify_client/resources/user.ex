@@ -5,6 +5,8 @@ defmodule ApifyClient.Resources.User do
   Provides methods for getting user details and monthly usage statistics.
   """
 
+  alias ApifyClient.Resources.WebhookDispatchCollection
+
   use ApifyClient.Base.ResourceClient, resource_path: "users"
 
   @doc """
@@ -78,7 +80,7 @@ defmodule ApifyClient.Resources.User do
   """
   @spec webhook_dispatches(t()) :: ApifyClient.Resources.WebhookDispatchCollection.t()
   def webhook_dispatches(user) do
-    collection = ApifyClient.Resources.WebhookDispatchCollection.new(user.client, [])
+    collection = WebhookDispatchCollection.new(user.client, [])
     # Webhook dispatches is a global endpoint, not user-specific
     %{collection | base_url: ApifyClient.Config.api_url(user.client.config)}
   end

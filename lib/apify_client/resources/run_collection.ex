@@ -3,6 +3,8 @@ defmodule ApifyClient.Resources.RunCollection do
   Client for managing runs collection.
   """
 
+  alias ApifyClient.Resources.Actor
+
   use ApifyClient.Base.ResourceCollectionClient, resource_path: "runs"
 
   def new(client, opts) do
@@ -15,7 +17,7 @@ defmodule ApifyClient.Resources.RunCollection do
     }
 
     if actor_id do
-      safe_actor_id = ApifyClient.Resources.Actor.safe_id(actor_id)
+      safe_actor_id = Actor.safe_id(actor_id)
       %{collection | base_url: "#{collection.base_url}/acts/#{safe_actor_id}"}
     else
       collection
@@ -30,5 +32,4 @@ defmodule ApifyClient.Resources.RunCollection do
       "#{base_url}/actor-runs"
     end
   end
-
 end

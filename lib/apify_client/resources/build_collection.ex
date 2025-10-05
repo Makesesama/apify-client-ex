@@ -3,6 +3,8 @@ defmodule ApifyClient.Resources.BuildCollection do
   Client for managing builds collection.
   """
 
+  alias ApifyClient.Resources.Actor
+
   use ApifyClient.Base.ResourceCollectionClient, resource_path: "builds"
 
   def new(client, opts) do
@@ -15,7 +17,7 @@ defmodule ApifyClient.Resources.BuildCollection do
     }
 
     if actor_id do
-      safe_actor_id = ApifyClient.Resources.Actor.safe_id(actor_id)
+      safe_actor_id = Actor.safe_id(actor_id)
       %{collection | base_url: "#{collection.base_url}/acts/#{safe_actor_id}"}
     else
       collection
@@ -30,5 +32,4 @@ defmodule ApifyClient.Resources.BuildCollection do
       "#{base_url}/actor-builds"
     end
   end
-
 end

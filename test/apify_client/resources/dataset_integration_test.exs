@@ -24,25 +24,25 @@ defmodule ApifyClient.Resources.DatasetIntegrationTest do
   setup do
     client = ApifyClientTest.ReqordSetup.setup_test_client()
 
-    # Only track costs in record mode to avoid API calls during replay
-    record_mode = System.get_env("REQORD") != nil
-
-    initial_usage = if record_mode do
+    # Always track costs - reqord will handle HTTP interactions consistently
+    initial_usage =
       case ApifyClientTest.CostTracker.get_usage(client) do
         {:ok, usage} -> usage
         {:error, _} -> nil
       end
-    else
-      nil
-    end
 
     on_exit(fn ->
-      # Only report costs in record mode and if we have initial usage
-      if record_mode && initial_usage do
+      # Always attempt to report costs if we have initial usage
+      if initial_usage do
         try do
           case ApifyClientTest.CostTracker.get_usage(client) do
             {:ok, final_usage} ->
-              ApifyClientTest.CostTracker.report_costs("Dataset Operations", initial_usage, final_usage)
+              ApifyClientTest.CostTracker.report_costs(
+                "Dataset Operations",
+                initial_usage,
+                final_usage
+              )
+
             {:error, _} ->
               :ok
           end
@@ -59,11 +59,12 @@ defmodule ApifyClient.Resources.DatasetIntegrationTest do
   test "lists datasets with pagination", %{client: client} do
     datasets_collection = ApifyClient.datasets(client)
 
-    {:ok, datasets_list} = DatasetCollection.list(
-      datasets_collection,
-      limit: 5,
-      offset: 0
-    )
+    {:ok, datasets_list} =
+      DatasetCollection.list(
+        datasets_collection,
+        limit: 5,
+        offset: 0
+      )
 
     # Verify the response structure
     assert is_map(datasets_list)
@@ -77,10 +78,11 @@ defmodule ApifyClient.Resources.DatasetIntegrationTest do
     datasets_collection = ApifyClient.datasets(client)
 
     # Create a new dataset
-    {:ok, created_dataset} = DatasetCollection.create(
-      datasets_collection,
-      %{name: "test-dataset-lifecycle"}
-    )
+    {:ok, created_dataset} =
+      DatasetCollection.create(
+        datasets_collection,
+        %{name: "test-dataset-lifecycle"}
+      )
 
     assert is_binary(created_dataset["id"])
     # Note: name might be nil if not set by the API
@@ -142,11 +144,12 @@ defmodule ApifyClient.Resources.DatasetIntegrationTest do
   test "filters datasets by name", %{client: client} do
     datasets_collection = ApifyClient.datasets(client)
 
-    {:ok, datasets_list} = DatasetCollection.list(
-      datasets_collection,
-      limit: 10,
-      search: "test"
-    )
+    {:ok, datasets_list} =
+      DatasetCollection.list(
+        datasets_collection,
+        limit: 10,
+        search: "test"
+      )
 
     # Verify the response structure
     assert is_map(datasets_list)
@@ -163,17 +166,19 @@ defmodule ApifyClient.Resources.DatasetIntegrationTest do
     # Create a dataset with multiple items for pagination testing
     datasets_collection = ApifyClient.datasets(client)
 
-    {:ok, created_dataset} = DatasetCollection.create(
-      datasets_collection,
-      %{name: "test-dataset-pagination"}
-    )
+    {:ok, created_dataset} =
+      DatasetCollection.create(
+        datasets_collection,
+        %{name: "test-dataset-pagination"}
+      )
 
     dataset_client = ApifyClient.dataset(client, created_dataset["id"])
 
     # Push multiple items
-    items = for i <- 1..10 do
-      %{index: i, data: "item-#{i}"}
-    end
+    items =
+      for i <- 1..10 do
+        %{index: i, data: "item-#{i}"}
+      end
 
     {:ok, _} = Dataset.push_items(dataset_client, items)
 
@@ -197,10 +202,11 @@ defmodule ApifyClient.Resources.DatasetIntegrationTest do
     datasets_collection = ApifyClient.datasets(client)
 
     # Create a dataset
-    {:ok, created_dataset} = DatasetCollection.create(
-      datasets_collection,
-      %{name: "test-dataset-update"}
-    )
+    {:ok, created_dataset} =
+      DatasetCollection.create(
+        datasets_collection,
+        %{name: "test-dataset-update"}
+      )
 
     dataset_client = ApifyClient.dataset(client, created_dataset["id"])
 
