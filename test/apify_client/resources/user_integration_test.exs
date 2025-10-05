@@ -32,6 +32,9 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     {:ok, client: client}
   end
 
+  # COMMENTED OUT: This test exposes sensitive account information (email, username, plan details)
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "gets current user information", %{client: client} do
     user_client = ApifyClient.user(client, "me")
 
@@ -53,6 +56,9 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     assert is_binary(user_info["createdAt"])
   end
 
+  # COMMENTED OUT: This test exposes sensitive billing and usage data
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "gets user's monthly usage", %{client: client} do
     user_client = ApifyClient.user(client, "me")
 
@@ -82,6 +88,9 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     end
   end
 
+  # COMMENTED OUT: This test exposes sensitive account limits
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "gets user's limits", %{client: client} do
     user_client = ApifyClient.user(client, "me")
 
@@ -114,6 +123,9 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     assert %ApifyClient.Error{type: :not_found_error} = error
   end
 
+  # COMMENTED OUT: Cassette removed as it may contain user information
+  # TODO: Re-record with synthetic data or mock response
+  @tag :skip
   test "gets public user information", %{client: client} do
     # Use a known public user (Apify's official account)
     public_username = "apify"
@@ -137,6 +149,9 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     end
   end
 
+  # COMMENTED OUT: This test may expose sensitive webhook data
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "gets user's webhook dispatches", %{client: client} do
     user_client = ApifyClient.user(client, "me")
     webhooks_collection = User.webhook_dispatches(user_client)
@@ -164,6 +179,9 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     end
   end
 
+  # COMMENTED OUT: This test exposes full sensitive account details
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "gets user account information with all details", %{client: client} do
     user_client = ApifyClient.user(client, "me")
 
@@ -189,6 +207,9 @@ defmodule ApifyClient.Resources.UserIntegrationTest do
     end
   end
 
+  # COMMENTED OUT: This test exposes sensitive account permissions and plan details
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "verifies user account permissions", %{client: client} do
     # This test verifies that we can access our own account info
     # but get appropriate errors for unauthorized operations

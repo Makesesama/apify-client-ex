@@ -42,6 +42,9 @@ defmodule ApifyClient.IntegrationExampleTest do
     {:ok, client: client}
   end
 
+  # COMMENTED OUT: This test exposes sensitive account information through User.get and User.limits
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "complete web scraping workflow", %{client: client} do
     # 1. Check user account and limits
     user_client = ApifyClient.user(client, "me")

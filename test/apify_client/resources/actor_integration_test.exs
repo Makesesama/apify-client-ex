@@ -111,6 +111,9 @@ defmodule ApifyClient.Resources.ActorIntegrationTest do
     end
   end
 
+  # COMMENTED OUT: Cassette removed as it contained user ID in list operations
+  # TODO: Re-record with mock data or use public actor runs only
+  @tag :skip
   test "fetches actor runs", %{client: client} do
     # Use a public actor that likely has runs
     actor_id = "apify/web-scraper"

@@ -28,6 +28,9 @@ defmodule ApifyClient.Resources.KeyValueStoreIntegrationTest do
     {:ok, client: client}
   end
 
+  # COMMENTED OUT: Cassette removed as it contained user ID in list responses
+  # TODO: Re-record with mock data that doesn't expose account information
+  @tag :skip
   test "lists key-value stores with pagination", %{client: client} do
     stores_collection = ApifyClient.key_value_stores(client)
 
@@ -231,6 +234,9 @@ defmodule ApifyClient.Resources.KeyValueStoreIntegrationTest do
     KeyValueStore.delete(store_client)
   end
 
+  # COMMENTED OUT: Cassette removed as it contained user ID in filtered results
+  # TODO: Re-record with mock data that doesn't expose account information
+  @tag :skip
   test "filters stores by name", %{client: client} do
     stores_collection = ApifyClient.key_value_stores(client)
 

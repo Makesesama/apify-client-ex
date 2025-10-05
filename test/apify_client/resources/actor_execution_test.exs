@@ -49,6 +49,9 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
     {:ok, client: client, user_client: user_client, initial_usage: initial_usage}
   end
 
+  # COMMENTED OUT: This test exposes sensitive usage and billing data through User.monthly_usage
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "executes actor and tracks costs", %{
     client: client,
     user_client: user_client,
@@ -156,6 +159,9 @@ defmodule ApifyClient.Resources.ActorExecutionTest do
     end
   end
 
+  # COMMENTED OUT: This test exposes sensitive usage and billing data through User.monthly_usage
+  # TODO: Implement data redaction in cassettes before re-enabling
+  @tag :skip
   test "executes web scraper with minimal input", %{
     client: client,
     user_client: user_client,

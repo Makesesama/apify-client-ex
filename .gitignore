@@ -28,3 +28,30 @@ apify_client-*.tar
 
 # Dialyzer PLT files
 /priv/plts/
+
+# Sensitive test cassettes - DO NOT COMMIT
+# These cassettes contain real account data and should not be in public repos
+/test/support/cassettes/UserIntegration/gets_current_user_information.jsonl
+/test/support/cassettes/UserIntegration/gets_user_account_information_with_all_details.jsonl
+/test/support/cassettes/UserIntegration/gets_user's_monthly_usage.jsonl
+/test/support/cassettes/UserIntegration/gets_user's_limits.jsonl
+/test/support/cassettes/UserIntegration/verifies_user_account_permissions.jsonl
+/test/support/cassettes/UserIntegration/gets_user's_webhook_dispatches.jsonl
+/test/support/cassettes/UserIntegration/gets_public_user_information.jsonl
+
+# Consider also ignoring all user-related cassettes
+# /test/support/cassettes/UserIntegration/*.jsonl
+
+# Actor execution tests that expose billing data
+/test/support/cassettes/ActorExecution/executes_actor_and_tracks_costs.jsonl
+/test/support/cassettes/ActorExecution/executes_web_scraper_with_minimal_input.jsonl
+
+# Integration tests that expose account data
+/test/support/cassettes/IntegrationExample/complete_web_scraping_workflow.jsonl
+
+# Additional cassettes that contain user ID in list operations
+/test/support/cassettes/ActorIntegration/fetches_actor_runs.jsonl
+/test/support/cassettes/KeyValueStoreIntegration/filters_stores_by_name.jsonl
+/test/support/cassettes/KeyValueStoreIntegration/lists_key-value_stores_with_pagination.jsonl
+/test/support/cassettes/RequestQueueIntegration/filters_queues_by_name.jsonl
+/test/support/cassettes/RequestQueueIntegration/lists_request_queues_with_pagination.jsonl
