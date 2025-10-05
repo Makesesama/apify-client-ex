@@ -46,7 +46,8 @@ defmodule ApifyClient.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
       {:bypass, "~> 2.1", only: :test},
-      {:mox, "~> 1.1", only: :test}
+      {:mox, "~> 1.1", only: :test},
+      {:reqord, "~> 0.3", only: :test}
     ]
   end
 

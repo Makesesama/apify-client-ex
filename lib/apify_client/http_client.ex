@@ -28,13 +28,19 @@ defmodule ApifyClient.HTTPClient do
 
     headers = build_headers(config)
 
+    # Get req_options from application config for test stubbing
+    req_options = Application.get_env(:apify_client, :req_options, [])
+
+    base_options = [
+      base_url: base_url,
+      headers: headers,
+      receive_timeout: config.timeout_ms,
+      max_redirects: 3
+    ]
+
     req =
-      Req.new(
-        base_url: base_url,
-        headers: headers,
-        receive_timeout: config.timeout_ms,
-        max_redirects: 3
-      )
+      (base_options ++ req_options)
+      |> Req.new()
       |> attach_error_handler()
 
     %__MODULE__{
@@ -336,6 +342,7 @@ defmodule ApifyClient.HTTPClient do
   end
 
   defp stream_next(:continue), do: receive_stream_chunks()
+  defp stream_next({chunks, :continue}) when is_list(chunks), do: {chunks, :continue}
   defp stream_next({:halt, result}), do: {:halt, result}
 
   defp stream_after(:ok), do: :ok

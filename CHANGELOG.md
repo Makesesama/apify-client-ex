@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2024-10-01
-
 ### Added
 - Initial release of the Apify Client for Elixir
 - Complete actor management (get, call, start, build, versions)
@@ -59,4 +57,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dialyzer type checking support
 
 [Unreleased]: https://github.com/apify/apify-client-elixir/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/apify/apify-client-elixir/releases/tag/v0.1.0

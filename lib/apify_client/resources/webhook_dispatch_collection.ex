@@ -23,6 +23,15 @@ defmodule ApifyClient.Resources.WebhookDispatchCollection do
     end
   end
 
+  # Override url function to handle different endpoint patterns
+  def url(%__MODULE__{base_url: base_url}) do
+    if String.contains?(base_url, "/webhooks/") do
+      "#{base_url}/dispatches"
+    else
+      "#{base_url}/webhook-dispatches"
+    end
+  end
+
   @doc """
   Lists webhook dispatches.
 
