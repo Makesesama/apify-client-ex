@@ -4,6 +4,9 @@ An Elixir client library for the [Apify platform](https://apify.com/), ported fr
 
 [Apify](https://apify.com/) is a web scraping and automation platform that lets you turn websites into APIs. This library provides a convenient way to interact with the [Apify API](https://docs.apify.com/api/v2) from Elixir applications, with support for all major Apify resources including actors, datasets, key-value stores, request queues, and more.
 
+## Notice
+This libary was quickly created with Claude-Code and is not yet stable. All functionality was tested extensively with real api calls and tests. If you want to use this now most things will work, but you should review the code manually and be aware that things can break. Eventually this will be stable.
+
 ## Installation
 
 Add `apify_client` to your list of dependencies in `mix.exs`:
