@@ -78,17 +78,22 @@ defmodule ApifyClient.Resources.RequestQueue do
   @spec batch_add_requests(t(), list(map())) :: {:ok, map()} | {:error, Error.t()}
   def batch_add_requests(queue, requests) do
     # Convert atom keys to string keys and handle payload for each request
-    requests_with_string_payloads = Enum.map(requests, fn request ->
-      request_with_string_keys = atomize_to_string_keys(request)
+    requests_with_string_payloads =
+      Enum.map(requests, fn request ->
+        request_with_string_keys = atomize_to_string_keys(request)
 
-      case request_with_string_keys["payload"] do
-        nil -> request_with_string_keys
-        payload when is_binary(payload) -> request_with_string_keys
-        payload -> Map.put(request_with_string_keys, "payload", Jason.encode!(payload))
-      end
-    end)
+        case request_with_string_keys["payload"] do
+          nil -> request_with_string_keys
+          payload when is_binary(payload) -> request_with_string_keys
+          payload -> Map.put(request_with_string_keys, "payload", Jason.encode!(payload))
+        end
+      end)
 
-    HTTPClient.post(queue.http_client, url(queue, "requests/batch"), requests_with_string_payloads)
+    HTTPClient.post(
+      queue.http_client,
+      url(queue, "requests/batch"),
+      requests_with_string_payloads
+    )
   end
 
   @doc """
