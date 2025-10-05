@@ -1,6 +1,11 @@
 .direnv/
 .nix-hex/
 .nix-mix/
+.env
+.pre-commit-config.yaml
+
+apify-client-js
+openapi.json
 
 # The directory Mix will write compiled artifacts to.
 /_build/
