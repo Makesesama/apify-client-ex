@@ -67,7 +67,7 @@ defmodule ApifyClient.Resources.KeyValueStoreIntegrationTest do
     # Test setting records
     {:ok, _} = KeyValueStore.set_record(store_client, "test-key", %{
       message: "Hello, World!",
-      timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
+      timestamp: "2025-10-03T19:09:32.402377Z",
       data: [1, 2, 3]
     })
 

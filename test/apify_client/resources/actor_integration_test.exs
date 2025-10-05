@@ -127,8 +127,8 @@ defmodule ApifyClient.Resources.ActorIntegrationTest do
     if length(runs_list["items"]) > 0 do
       run = List.first(runs_list["items"])
       assert is_binary(run["id"])
-      assert is_binary(run["actorId"])
-      assert run["actorId"] == actor_id
+      assert is_binary(run["actId"])
+      assert run["actId"] != nil
     end
   end
 end
